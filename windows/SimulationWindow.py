@@ -83,6 +83,7 @@ class SimulationWindow(Toplevel):
             self.cpu_available = True
             self.ready_processes = []
             self.current_process = None
+            self.processes.sort(key=lambda x: x["Arrival Time"])
             
             # Function call
             
