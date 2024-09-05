@@ -83,7 +83,7 @@ class SimulationWindow(Toplevel):
             self.cpu_available = True
             self.ready_processes = []
             self.current_process = None
-            self.processes.sort(key=lambda x: x["Arrival Time"])
+            self.processes.sort(key=lambda x: x.arrival_time)
             
             # Function call
             
@@ -113,8 +113,8 @@ class SimulationWindow(Toplevel):
         
         self.queue_listbox.delete(0, tk.END)
         for process in self.processes:
-            if  self.arrival_time >= process['Arrival Time']:    
-                self.queue_listbox.insert(tk.END, f"PID: {process['PID']}, AT: {process['Arrival Time']}, BT: {process['Burst Time']}, PR: {process['Priority']}")
+            if  self.arrival_time >= process.arrival_time:    
+                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, BT: {process.burst_time}, PR: {process.priority}")
                 if process not in self.ready_processes:
                     self.ready_processes.append(process)
 
@@ -128,14 +128,14 @@ class SimulationWindow(Toplevel):
             if self.processes: self.processes.pop(0)
             
             self.current_process = self.ready_processes.pop(0)
-            self.current_process_value.config(text=f"PID: {self.current_process['PID']}")
+            self.current_process_value.config(text=f"PID: {self.current_process.pid}")
             self.queue_listbox.delete(0)
             
             
         # Check if there is a current process in the cpu and if it has completed its burst time
         
-        if self.current_process and self.burst_time >= self.current_process['Burst Time']:
-            self.finished_listbox.insert(tk.END, f"PID: {self.current_process['PID']}, AT: {self.current_process['Arrival Time']}, BT: {self.current_process['Burst Time']}, PR: {self.current_process['Priority']}")
+        if self.current_process and self.burst_time >= self.current_process.burst_time:
+            self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
             self.cpu_available = True
             self.current_process = None
             

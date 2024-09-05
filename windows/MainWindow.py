@@ -3,6 +3,7 @@ from tkinter import ttk, simpledialog, Toplevel
 
 import settings
 from windows.SimulationWindow import SimulationWindow
+from src.Process import Process
 
 
 class MainWindow(tk.Tk):
@@ -99,12 +100,7 @@ class MainWindow(tk.Tk):
         processes = []
         for child in self.tree.get_children():
             process_data = self.tree.item(child)["values"]
-            process = {
-                "PID": process_data[0],
-                "Arrival Time": int(process_data[1]),
-                "Burst Time": int(process_data[2]),
-                "Priority": process_data[3] if process_data[3] != "N/A" else None
-            }
+            process = Process(process_data[0], int(process_data[1]), int(process_data[2]), int(process_data[3]))
             processes.append(process)
         
         return processes
