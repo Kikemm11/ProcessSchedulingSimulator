@@ -38,9 +38,10 @@ class MainWindow(tk.Tk):
                 "FIFO", 
                 "SJF", 
                 "RandomSelection", 
-                "PrioritySelection", 
+                "PrioritySelection (Non-Preemptive)", 
                 "RoundRobin", 
-                "SRTF"
+                "SRTF",
+                "PrioritySelection (Preemptive)"
             ],
             state="readonly"
         )

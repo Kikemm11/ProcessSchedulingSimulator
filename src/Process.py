@@ -5,3 +5,4 @@ class Process():
         self.arrival_time = _arrival_time
         self.burst_time = _burst_time
         self.priority = _priority
+        self.waiting_time = 0
