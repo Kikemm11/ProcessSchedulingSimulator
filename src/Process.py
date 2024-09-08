@@ -6,3 +6,4 @@ class Process():
         self.burst_time = _burst_time
         self.priority = _priority
         self.waiting_time = 0
+        self.remaining_burst_time = self.burst_time
