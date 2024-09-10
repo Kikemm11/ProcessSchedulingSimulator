@@ -1,3 +1,13 @@
+"""
+Authors:
+- Iván Maldonado (Kikemaldonado11@gmail.com)
+- Maria José Vera (nandadevi97816@gmail.com)
+- Sergio Fernández (sergiofnzg@gmail.com)
+
+Developed at: September 2024
+"""
+
+
 import tkinter as tk
 from tkinter import Toplevel
 
@@ -5,6 +15,7 @@ import settings
 import time
 from statistics import mean
 import random
+
 
 class SimulationWindow(Toplevel):
     def __init__(self, parent, _processes, _selected_algorithm):
@@ -17,12 +28,33 @@ class SimulationWindow(Toplevel):
         self.selected_algorithm = _selected_algorithm
         self.total_processes = len(self.processes)
         
+        # Special variables to handle the logic during the simulation 
+        
+        self.simulation_time = 0.1
+            
+        self.arrival_time = 0
+        self.burst_time = 0
+        self.cpu_usage_time = 0
+        
+        self.cpu_available = True
+        
+        self.ready_processes = []
+        self.process_waiting_times = []
+        self.finished_processes = []
+        self.cpu_usage = []
+        self.execution_time = []
+        self.blocked_time = []
+        self.blocked_processes = []
+        
+        self.current_process = None
+        
+        
         
         # Configure Window Grid
         
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)# Resources and utils for simulation
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
         
@@ -72,173 +104,32 @@ class SimulationWindow(Toplevel):
         self.stats_text.grid(row=2, column=1, padx=10, pady=(30, 10), sticky="se")
         
         self.run_simulation()
-
-
-
-    def run_simulation(self):
         
-        if self.selected_algorithm == "FIFO":
-            
-            # Special variables for FIFO algorithm
-            
-            self.simulation_time = 0.1
-            
-            self.arrival_time = 0
-            self.burst_time = 0
-            self.cpu_usage_time = 0
-            
-            self.cpu_available = True
-            
-            self.ready_processes = []
-            self.process_waiting_times = []
-            self.finished_processes = []
-            self.cpu_usage = []
-            self.execution_time = []
-            
-            self.current_process = None
-            self.processes.sort(key=lambda x: x.arrival_time)
-            
-            # Function call
-            
-            self.fifo()
-            
-        elif self.selected_algorithm == "SJF":
-            pass
-        elif self.selected_algorithm == "RandomSelection":
-            
-            # Special variables for RandomSelection algorithm
-            
-            self.simulation_time = 0.1
-            self.arrival_time = 0
-            self.burst_time = 0
-            self.cpu_usage_time = 0
-            
-            self.cpu_available = True
-            
-            self.ready_processes = []
-            self.process_waiting_times = []
-            self.finished_processes = []
-            self.cpu_usage = []
-            self.execution_time = []
-            
-            self.current_process = None
-            
-            # Function call for Random Selection algorithm
-            
-            self.random_selection()
-            
-        elif self.selected_algorithm == "PrioritySelection (Non-Preemptive)":
-            
-            # Special variables for PrioritySelection (Non-Preemptive) algorithm
-            
-            self.simulation_time = 0.1
-            
-            self.arrival_time = 0
-            self.burst_time = 0
-            self.cpu_usage_time = 0
-            
-            self.cpu_available = True
-            
-            self.ready_processes = []
-            self.process_waiting_times = []
-            self.finished_processes = []
-            self.cpu_usage = []
-            self.execution_time = []
-            
-            self.current_process = None
-            self.processes.sort(key=lambda x: x.priority, reverse=True)
-            
-            # Function call
-            
-            self.priority_selection_non_preemptive()
-            
         
-        elif self.selected_algorithm == "RoundRobin":
-            pass
-        elif self.selected_algorithm == "SRTF":
-            
-            
-            # Special variables for SRTF algorithm
-            
-            self.simulation_time = 0.1
-            
-            self.arrival_time = 0
-            self.burst_time = 0
-            self.cpu_usage_time = 0
-            
-            self.cpu_available = True
-            
-            self.ready_processes = []
-            self.process_waiting_times = []
-            self.finished_processes = []
-            self.cpu_usage = []
-            self.execution_time = []
-            
-            self.current_process = None
-            self.processes.sort(key=lambda x: x.remaining_burst_time)
-            
-            # Function call
-            
-            self.srtf()
-            
-        elif self.selected_algorithm == "PrioritySelection (Preemptive)":
-            
-            # Special variables for PrioritySelection (Preemptive) algorithm
-            
-            self.simulation_time = 0.1
-            self.arrival_time = 0
-            self.burst_time = 0
-            self.cpu_usage_time = 0
-            
-            self.cpu_available = True
-            
-            self.ready_processes = []
-            self.process_waiting_times = []
-            self.finished_processes = []
-            self.cpu_usage = []
-            self.execution_time = []
-            
-            self.current_process = None
-            self.processes.sort(key=lambda x: x.priority, reverse=True)
-            
-            # Function call for Priority-Based Planning (Preemptive) algorithm
-            
-            self.priority_selection_preemptive()
-            
-
-
-
-# ------------------------------- Non-Preemptive Algorithms -------------------------------------------
-
-
-
-
+    # ---------------------------- Non Preemptive Algorithms -----------------------------------------
+    
+    
     # FIFO ALGORITHM
 
-
     def fifo(self):
+        """Under the FIFO logic schedules the process in arrival order in wich
+        the first process to reach the ready queue will be the first to executes"""
         
         if self.total_processes == len(self.finished_processes): return
         
         start_timestamp = time.time()
         
-        # Update process queue and add process to the ready_process list
+        self.update_ready_queue()
         
-        self.queue_listbox.delete(0, tk.END)
-        for process in self.processes:
-            if  self.arrival_time >= process.arrival_time:    
-                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, BT: {process.burst_time}, PR: {process.priority}")
-                if process not in self.ready_processes:
-                    self.ready_processes.append(process)
-
-
+        
         # Manage the logic when the cpu is available to accept a process
-
+        
         if self.ready_processes and self.cpu_available:
             
             self.cpu_available = False
             self.burst_time = 0
             self.cpu_usage_time = 0
+            
             if self.processes: self.processes.pop(0)
             
             self.current_process = self.ready_processes.pop(0)
@@ -247,77 +138,40 @@ class SimulationWindow(Toplevel):
             self.queue_listbox.delete(0)
             
             
-        # Check if there is a current process in the cpu and if it has completed its burst time
-        
-        if self.current_process and self.burst_time >= self.current_process.burst_time:
-            self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
-            self.cpu_available = True
-            self.cpu_usage.append(self.cpu_usage_time)
-            self.execution_time.append(self.current_process.waiting_time + self.current_process.burst_time)
-            self.finished_processes.append(self.current_process)
-            self.current_process = None
+        self.check_finish_execution()
+                
+        self.update_blocked_processes() 
             
-        # Set the cpu label to None if it has no process    
+        self.cpu_to_none()
             
-        if not self.current_process:
-            self.current_process_value.config(text="None")
-            
-        # Update the statistics    
-            
-        self.stats_text.delete(1.0, tk.END)
+        self.update_statistics()
+
+        end_timestamp = time.time()
         
-        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time ) * 100
-        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage,2)}%\n")
+        self.dt = end_timestamp - start_timestamp  
         
-        avrg_execution_time = mean(self.execution_time) if self.execution_time else 0
-        self.stats_text.insert(tk.END, f"Average Execution Time: {round(avrg_execution_time, 2)}\n")
-        
-        
-        avrg_waiting_time = mean(self.process_waiting_times) if self.process_waiting_times else 0
-        self.stats_text.insert(tk.END, f"Average Waiting Time: {round(avrg_waiting_time, 2)}\n")
-        
-        self.stats_text.insert(tk.END, f"Total processes completed: {len(self.finished_processes)}\n")
-        
-        self.stats_text.insert(tk.END, f"Simulation time: {round(self.simulation_time, 2)} seconds\n")
-        
-        self.update_idletasks()
-        
-        # Update the timers
-        
-        end_timestamp = time.time()  
-        
-        self.arrival_time += end_timestamp - start_timestamp
-        self.burst_time += end_timestamp - start_timestamp
-        
-        for process in self.ready_processes:
-            process.waiting_time += end_timestamp - start_timestamp
-            
-        if not self.cpu_available:
-            self.cpu_usage_time += end_timestamp - start_timestamp
-            
-        self.simulation_time += end_timestamp - start_timestamp
+        self.update_timers()
                 
         self.after(1, self.fifo)
         
         
-    
+        
     # RANDOM SELECTION ALGORITHM
-    
+        
     def random_selection(self):
+        """Given n number of processes in the ready queue the algorithm
+        will schedule any process randomly to be executed, in the cases
+        where there is only one process at the queue this will be executed
+        right away"""
+        
         if self.total_processes == len(self.finished_processes):
             return
         
         start_timestamp = time.time()
-
-        # Update process queue and add process to the ready_process list
         
-        self.queue_listbox.delete(0, tk.END)
-        for process in self.processes:
-            if self.arrival_time >= process.arrival_time:
-                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, BT: {process.burst_time}, PR: {process.priority}")
-                if process not in self.ready_processes:
-                    self.ready_processes.append(process)
-
+        self.update_ready_queue()
+        
+        
         # Randomly select a process if the CPU is available
         
         if self.ready_processes and self.cpu_available:
@@ -329,76 +183,45 @@ class SimulationWindow(Toplevel):
             self.processes.remove(self.current_process)
             self.process_waiting_times.append(self.current_process.waiting_time)
             self.current_process_value.config(text=f"PID: {self.current_process.pid}")
-
-        # Check if the current process in the CPU has completed its burst time
+            
+            
+        self.check_finish_execution()
         
-        if self.current_process and self.burst_time >= self.current_process.burst_time:
-            self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
-            self.cpu_available = True
-            self.cpu_usage.append(self.cpu_usage_time)
-            self.execution_time.append(self.current_process.waiting_time + self.current_process.burst_time)
-            self.finished_processes.append(self.current_process)
-            self.current_process = None
-
-        # Set the CPU label to None if it has no process
+        self.update_blocked_processes()
         
-        if not self.current_process:
-            self.current_process_value.config(text="None")
-
-        # Update the statistics
+        self.cpu_to_none()
         
-        self.stats_text.delete(1.0, tk.END)
-        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time) * 100
-        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage, 2)}%\n")
-        avrg_execution_time = mean(self.execution_time) if self.execution_time else 0
-        self.stats_text.insert(tk.END, f"Average Execution Time: {round(avrg_execution_time, 2)}\n")
-        avrg_waiting_time = mean(self.process_waiting_times) if self.process_waiting_times else 0
-        self.stats_text.insert(tk.END, f"Average Waiting Time: {round(avrg_waiting_time, 2)}\n")
-        self.stats_text.insert(tk.END, f"Total processes completed: {len(self.finished_processes)}\n")
-        self.stats_text.insert(tk.END, f"Simulation time: {round(self.simulation_time, 2)} seconds\n")
-        self.update_idletasks()
-
-        # Update the timers
+        self.update_statistics()
         
         end_timestamp = time.time()
-        self.arrival_time += end_timestamp - start_timestamp
-        self.burst_time += end_timestamp - start_timestamp
         
-        for process in self.ready_processes:
-            process.waiting_time += end_timestamp - start_timestamp
-            
-        if not self.cpu_available:
-            self.cpu_usage_time += end_timestamp - start_timestamp
-            
-        self.simulation_time += end_timestamp - start_timestamp
+        self.dt = end_timestamp - start_timestamp
+        
+        self.update_timers()
         
         self.after(1, self.random_selection)
         
         
-        
+
     # PRIORITY SELECTION ALGORITHM     
-        
-        
+            
     def priority_selection_non_preemptive(self):
+        """All the processes will be rearranged in the ready queue
+        based on their priority value and then the one with the
+        higher value will be executed and so on in every iteration.
+        Once a process it's being executed it will stay until finished"""
         
         if self.total_processes == len(self.finished_processes): return
         
         start_timestamp = time.time()
         
-        # Update process queue and add process to the ready_process list
-        
-        self.queue_listbox.delete(0, tk.END)
-        for process in self.processes:
-            if  self.arrival_time >= process.arrival_time:    
-                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, BT: {process.burst_time}, PR: {process.priority}")
-                if process not in self.ready_processes:
-                    self.ready_processes.append(process)
+        self.update_ready_queue()
                     
         
         # Manage the logic when the cpu is available to accept a process
         
         self.ready_processes.sort(key=lambda x: x.priority, reverse=True)
-
+        
         if self.ready_processes and self.cpu_available:
             
             self.cpu_available = False
@@ -412,92 +235,53 @@ class SimulationWindow(Toplevel):
             self.queue_listbox.delete(0)
             
         
-        # Check if there is a current process in the cpu and if it has completed its burst time
+        self.check_finish_execution()
         
-        if self.current_process and self.burst_time >= self.current_process.burst_time:
-            self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
-            self.cpu_available = True
-            self.cpu_usage.append(self.cpu_usage_time)
-            self.execution_time.append(self.current_process.waiting_time + self.current_process.burst_time)
-            self.finished_processes.append(self.current_process)
-            self.current_process = None
+        self.update_blocked_processes()  
             
-        # Set the cpu label to None if it has no process    
+        self.cpu_to_none()
             
-        if not self.current_process:
-            self.current_process_value.config(text="None")
-            
-        
-        # Update the statistics    
-            
-        self.stats_text.delete(1.0, tk.END)
-        
-        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time ) * 100
-        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage,2)}%\n")
-        
-        avrg_execution_time = mean(self.execution_time) if self.execution_time else 0
-        self.stats_text.insert(tk.END, f"Average Execution Time: {round(avrg_execution_time, 2)}\n")
-        
-        
-        avrg_waiting_time = mean(self.process_waiting_times) if self.process_waiting_times else 0
-        self.stats_text.insert(tk.END, f"Average Waiting Time: {round(avrg_waiting_time, 2)}\n")
-        
-        self.stats_text.insert(tk.END, f"Total processes completed: {len(self.finished_processes)}\n")
-        
-        self.stats_text.insert(tk.END, f"Simulation time: {round(self.simulation_time, 2)} seconds\n")
-        
-        self.update_idletasks()
-        
-        # Update the timers
+        self.update_statistics()
         
         end_timestamp = time.time()  
         
-        self.arrival_time += end_timestamp - start_timestamp
-        self.burst_time += end_timestamp - start_timestamp
+        self.dt = end_timestamp - start_timestamp
         
-        for process in self.ready_processes:
-            process.waiting_time += end_timestamp - start_timestamp
-            
-        if not self.cpu_available:
-            self.cpu_usage_time += end_timestamp - start_timestamp
-            
-        self.simulation_time += end_timestamp - start_timestamp
+        self.update_timers()
                 
-        self.after(1, self.priority_selection_non_preemptive)
-
-
-
-# ------------------------------- Preemptive Algorithms -------------------------------------------
-
-
-
+        self.after(1, self.priority_selection_non_preemptive)   
+        
+        
+    
+    
+    # ---------------------------- Preemptive Algorithms --------------------------------------------
+    
+    
+    
     # SRTF ALGORITHM
     
     def srtf(self):
-        
+        """This algorithm will rearrange the processes in the ready
+        queue based on its reamining burst time value and the next
+        to be executed will be the one with the minor value. In the
+        cases when a process it's being executed and another arrives
+        with minor burst time it inmediatly will be placed at the cpu
+        and the other one will be remitted to the ready queue again"""
         
         if self.total_processes == len(self.finished_processes): return
         
         start_timestamp = time.time()
         
-        # Update process queue and add process to the ready_process list
+        self.update_ready_queue()
         
-        self.queue_listbox.delete(0, tk.END)
-        for process in self.processes:
-            if  self.arrival_time >= process.arrival_time:    
-                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, Remaining BT: {process.remaining_burst_time}, PR: {process.priority}")
-                if process not in self.ready_processes:
-                    self.ready_processes.append(process)
-
-
         # Manage the logic when the cpu is available to accept a process
         
-
         if self.ready_processes and self.cpu_available:
             
             self.cpu_available = False
             self.burst_time = 0
             self.cpu_usage_time = 0
+            
             if self.processes: self.processes.remove(self.ready_processes[0])
             
             self.current_process = self.ready_processes.pop(0)
@@ -505,17 +289,10 @@ class SimulationWindow(Toplevel):
             self.current_process_value.config(text=f"PID: {self.current_process.pid}")
             self.queue_listbox.delete(0)
             
-            
-        # Check if there is a current process in the cpu and if it has completed its burst time
+
+        self.check_finish_execution()
         
-        if self.current_process and self.burst_time >= self.current_process.remaining_burst_time:
-            self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
-            self.cpu_available = True
-            self.cpu_usage.append(self.cpu_usage_time)
-            self.execution_time.append(self.current_process.waiting_time + self.current_process.burst_time)
-            self.finished_processes.append(self.current_process)
-            self.current_process = None
-            
+        self.update_blocked_processes()
             
         
         # Check if there is a process with minor remaining burst time to reach the cpu first
@@ -535,74 +312,44 @@ class SimulationWindow(Toplevel):
             self.ready_processes.remove(self.current_process)
             self.processes.remove(self.current_process)
             self.current_process_value.config(text=f"PID: {self.current_process.pid}")
-          
+        
             
-        # Set the cpu label to None if it has no process    
+        self.cpu_to_none()                     
             
-        if not self.current_process:
-            self.current_process_value.config(text="None")
-            
-        # Update the statistics    
-            
-        self.stats_text.delete(1.0, tk.END)
-        
-        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time ) * 100
-        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage,2)}%\n")
-        
-        avrg_execution_time = mean(self.execution_time) if self.execution_time else 0
-        self.stats_text.insert(tk.END, f"Average Execution Time: {round(avrg_execution_time, 2)}\n")
-        
-        
-        avrg_waiting_time = mean(self.process_waiting_times) if self.process_waiting_times else 0
-        self.stats_text.insert(tk.END, f"Average Waiting Time: {round(avrg_waiting_time, 2)}\n")
-        
-        self.stats_text.insert(tk.END, f"Total processes completed: {len(self.finished_processes)}\n")
-        
-        self.stats_text.insert(tk.END, f"Simulation time: {round(self.simulation_time, 2)} seconds\n")
-        
-        self.update_idletasks()
-        
-        # Update the timers
+        self.update_statistics()
         
         end_timestamp = time.time()  
         
-        self.arrival_time += end_timestamp - start_timestamp
-        self.burst_time += end_timestamp - start_timestamp
+        self.dt = end_timestamp - start_timestamp
         
-        for process in self.ready_processes:
-            process.waiting_time += end_timestamp - start_timestamp
-            
-        if not self.cpu_available:
-            self.cpu_usage_time += end_timestamp - start_timestamp
-            self.current_process.remaining_burst_time -= round(end_timestamp - start_timestamp, 2)
-        
-        self.simulation_time += end_timestamp - start_timestamp
+        self.update_timers()
                 
         self.after(1, self.srtf)
         
         
         
     # PRIORITY SELECTION (PREEMPTIVE)
-    
+
     def priority_selection_preemptive(self):
+        """All the processes will be rearranged in the ready queue
+        based on their priority value and then the one with the
+        higher value will be executed and so on in every iteration.
+        In the cases when a process it's being executed and another
+        arrives with higher priority it inmediatly will be placed at
+        the cpu and the other one will be remitted to the ready queue
+        again"""
+        
         if self.total_processes == len(self.finished_processes):
             return
         
         start_timestamp = time.time()
-
-        # Update process queue and add process to the ready_process list
         
-        self.queue_listbox.delete(0, tk.END)
-        for process in self.processes:
-            if self.arrival_time >= process.arrival_time:
-                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, BT: {process.burst_time}, PR: {process.priority}")
-                if process not in self.ready_processes:
-                    self.ready_processes.append(process)
-
+        self.update_ready_queue()
+        
         # Sort ready processes by priority (higher priority first)
         
         self.ready_processes.sort(key=lambda x: x.priority, reverse=True)
-
+        
         # Preempt the current process if a higher priority process arrives
         
         if self.ready_processes:
@@ -624,47 +371,151 @@ class SimulationWindow(Toplevel):
                 self.process_waiting_times.append(self.current_process.waiting_time)
                 self.current_process_value.config(text=f"PID: {self.current_process.pid}")
                 self.queue_listbox.delete(0)
-
-        # Check if the current process in the CPU has completed its burst time
+            
+                
+        self.check_finish_execution()
         
-        if self.current_process and self.burst_time >= self.current_process.burst_time:
+        self.update_blocked_processes()
+    
+        self.cpu_to_none()
+        
+        self.update_statistics()
+        
+        end_timestamp = time.time()
+        
+        self.dt = end_timestamp - start_timestamp
+        
+        self.update_timers()
+        
+        self.after(1, self.priority_selection_preemptive)
+        
+        
+        
+    # Resources and utils for simulation
+
+
+    def run_simulation(self):
+        """Determines wich algorithm to use and executes its logic"""
+        
+        if self.selected_algorithm == "FIFO":
+                      
+            self.processes.sort(key=lambda x: x.arrival_time)
+            self.fifo()
+            
+        elif self.selected_algorithm == "SJF":
+            pass
+        elif self.selected_algorithm == "RandomSelection":
+            
+            self.random_selection()
+            
+        elif self.selected_algorithm == "PrioritySelection (Non-Preemptive)":
+            
+            self.processes.sort(key=lambda x: x.priority, reverse=True)
+            self.priority_selection_non_preemptive()
+            
+        
+        elif self.selected_algorithm == "RoundRobin":
+            pass
+        elif self.selected_algorithm == "SRTF":
+              
+            self.processes.sort(key=lambda x: x.remaining_burst_time)
+            self.srtf()
+            
+        elif self.selected_algorithm == "PrioritySelection (Preemptive)":
+        
+            self.processes.sort(key=lambda x: x.priority, reverse=True)
+            self.priority_selection_preemptive()
+            
+    
+    def update_ready_queue(self):
+        """Update the value of the ready queue based on the available processes in the list"""
+        
+        self.queue_listbox.delete(0, tk.END)
+        for process in self.processes:
+            if  self.arrival_time >= process.arrival_time:    
+                self.queue_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, Remaining BT: {process.remaining_burst_time}, PR: {process.priority}")
+                if process not in self.ready_processes:
+                    self.ready_processes.append(process)
+                    
+                    
+    def check_finish_execution(self):
+        """Check if the current process in execution has reached its burst time to update its state"""
+        
+        if self.current_process and self.burst_time >= self.current_process.remaining_burst_time:
             self.finished_listbox.insert(tk.END, f"PID: {self.current_process.pid}, AT: {self.current_process.arrival_time}, BT: {self.current_process.burst_time}, PR: {self.current_process.priority}")
             self.cpu_available = True
             self.cpu_usage.append(self.cpu_usage_time)
             self.execution_time.append(self.current_process.waiting_time + self.current_process.burst_time)
             self.finished_processes.append(self.current_process)
             self.current_process = None
-
-        # Set the CPU label to None if it has no process
+            
+            
+    def update_blocked_processes(self):
+        """Update the blocked list based on the available process in the blocked list"""
+        
+        self.block_listbox.delete(0, tk.END)    
+        for process in self.blocked_processes:
+            self.block_listbox.insert(tk.END, f"PID: {process.pid}, AT: {process.arrival_time}, Remaining BT: {process.remaining_burst_time}, PR: {process.priority}")
+            
+            
+    def cpu_to_none(self):
+        """Set the CPU label to None in case it's not currently executing a process"""
         
         if not self.current_process:
             self.current_process_value.config(text="None")
-
-        # Update the statistics
+            
+            
+    def update_statistics(self):
+        """Manage all the logic and calcules to show the required statistics"""
         
         self.stats_text.delete(1.0, tk.END)
-        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time) * 100
-        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage, 2)}%\n")
+    
+        avrg_cpu_usage = (sum(self.cpu_usage) / self.simulation_time ) * 100
+        self.stats_text.insert(tk.END, f"CPU usage %: {round(avrg_cpu_usage,2)}%\n")
         avrg_execution_time = mean(self.execution_time) if self.execution_time else 0
         self.stats_text.insert(tk.END, f"Average Execution Time: {round(avrg_execution_time, 2)}\n")
         avrg_waiting_time = mean(self.process_waiting_times) if self.process_waiting_times else 0
         self.stats_text.insert(tk.END, f"Average Waiting Time: {round(avrg_waiting_time, 2)}\n")
+        avrg_blocked_time = mean(self.blocked_time) if self.blocked_time else 0
+        self.stats_text.insert(tk.END, f"Average Blocked Time: {round(avrg_blocked_time, 2)}\n")
         self.stats_text.insert(tk.END, f"Total processes completed: {len(self.finished_processes)}\n")
         self.stats_text.insert(tk.END, f"Simulation time: {round(self.simulation_time, 2)} seconds\n")
         self.update_idletasks()
-
-        # Update the timers
         
-        end_timestamp = time.time()
-        self.arrival_time += end_timestamp - start_timestamp
-        self.burst_time += end_timestamp - start_timestamp
+        
+    def update_timers(self):
+        """Update all the timers involved in the simulation"""
+        
+        self.arrival_time += self.dt
+        self.burst_time += self.dt
         
         for process in self.ready_processes:
-            process.waiting_time += end_timestamp - start_timestamp
+            process.waiting_time += self.dt
+            
+            
+        for process in self.blocked_processes:
+            if not process.still_bloked(self.dt):
+                self.blocked_processes.remove(process)
+                self.processes.append(process)
+                self.ready_processes.append(process)
+            
             
         if not self.cpu_available:
-            self.cpu_usage_time += end_timestamp - start_timestamp
+            self.cpu_usage_time += self.dt
+            self.current_process.remaining_burst_time -= (self.dt)
             
-        self.simulation_time += end_timestamp - start_timestamp
-        
-        self.after(1, self.priority_selection_preemptive)
+            rand = random.randint(0,3000)
+            
+            if  rand == 11:
+                
+                self.current_process.bloked = True
+                self.current_process.blocked_time = 0
+                blocked_time = random.randint(1,7)
+                self.current_process.blocked_max_time = blocked_time
+                self.blocked_time.append(blocked_time)
+                self.blocked_processes.append(self.current_process)
+                
+                self.cpu_available = True
+                self.current_process = None
+            
+        self.simulation_time += self.dt
