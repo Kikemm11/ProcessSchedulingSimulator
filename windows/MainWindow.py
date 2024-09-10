@@ -1,3 +1,13 @@
+"""
+Authors:
+- Iván Maldonado (Kikemaldonado11@gmail.com)
+- Maria José Vera (nandadevi97816@gmail.com)
+- Sergio Fernández (sergiofnzg@gmail.com)
+
+Developed at: September 2024
+"""
+
+
 import tkinter as tk
 from tkinter import ttk, simpledialog, Toplevel
 
